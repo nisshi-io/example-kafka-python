@@ -1,5 +1,5 @@
 {
-  "name": "tansu-kafka-python",
+  "name": "nisshi-kafka-python",
   "dockerFile": "Dockerfile",
   "postStartCommand": "./bin/up",
   "hostRequirements": {
@@ -15,15 +15,11 @@
     }
   },
   "forwardPorts": [
-    9092,
-    9100
+    9092
   ],
   "portsAttributes": {
     "9092": {
       "label": "kafka"
-    },
-    "9100": {
-      "label": "metrics"
     }
   },
   "features": {

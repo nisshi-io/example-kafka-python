@@ -9,7 +9,6 @@ services:
       - 5432:5432
     volumes:
       - db:/var/lib/postgresql/data
-      - ./etc/initdb.d/:/docker-entrypoint-initdb.d/
     healthcheck:
       test: /usr/bin/pg_isready
       interval: 5s
@@ -17,7 +16,10 @@ services:
       retries: 5
     pull_policy: missing
   minio:
-    image: quay.io/minio/minio
+    # MinIO no longer publishes images. pgsty/silo is a community-maintained
+    # AGPLv3 fork that still does, multi-arch, with mc at /usr/bin/mc and the
+    # MinIO S3 API, including conditional writes.
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
     command: server /data --console-address ":9001"
     volumes:
       - minio:/data
@@ -32,13 +34,12 @@ services:
       retries: 1
       start_period: 5s
       timeout: 5s
-  tansu:
-    image: ${TANSU_IMAGE}
+  nisshi:
+    image: ${NISSHI_IMAGE}
     restart: unless-stopped
     environment:
       CLUSTER_ID: ${CLUSTER_ID}
       ADVERTISED_LISTENER_URL: ${ADVERTISED_LISTENER_URL}
-      PROMETHEUS_LISTENER_URL: ${PROMETHEUS_LISTENER_URL}
       STORAGE_ENGINE: ${STORAGE_ENGINE}
       RUST_BACKTRACE: ${RUST_BACKTRACE}
       RUST_LOG: ${RUST_LOG}
@@ -46,17 +47,17 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_ENDPOINT: ${AWS_ENDPOINT}
       AWS_ALLOW_HTTP: ${AWS_ALLOW_HTTP}
-    volumes:
-      - ./etc/schema/:/schema/
-    command: --kafka-cluster-id ${CLUSTER_ID}
-      --kafka-listener-url tcp://0.0.0.0:9092/
-      --kafka-advertised-listener-url ${ADVERTISED_LISTENER_URL}
+    command: broker
+      --cluster-id ${CLUSTER_ID}
+      --listener-url tcp://[::]:9092
+      --advertised-listener-url ${ADVERTISED_LISTENER_URL}
       --storage-engine ${STORAGE_ENGINE}
-      --schema-registry file:///schema
     ports:
       - 9092:9092
-      - 9100:9100
-    pull_policy: always
+    depends_on:
+      db:
+        condition: service_healthy
+    pull_policy: missing
 volumes:
   db:
     driver: local

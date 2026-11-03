@@ -1,19 +1,19 @@
-# Kafka Python client with Tansu
+# Kafka Python client with Nisshi
 
-[Tansu](https://tansu.io) is an Apache Kafka compatible broker that stores data
-in S3 or PostgreSQL. This example uses the
+[Nisshi](https://nisshi.io) is an Apache Kafka®-compatible broker that stores
+its data in PostgreSQL, or in S3 (experimental). This example uses the
 [kafka-python](https://github.com/dpkp/kafka-python) client,
-to send and receive messages with [Tansu](https://tansu.io).
+to send and receive messages with [Nisshi](https://nisshi.io).
 
 In this example, [MinIO](https://min.io), [PostgreSQL](https://www.postgresql.org)
-and [Tansu](https://tansu.io) run in [Docker](https://docs.docker.com/desktop/)
+and [Nisshi](https://nisshi.io) run in [Docker](https://docs.docker.com/desktop/)
 [Compose](https://docs.docker.com/compose/)
 for easy installation and setup.
 
 Start off by cloning this repository:
 
 ```shell
-git clone https://github.com/tansu-io/example-kafka-python.git
+git clone https://github.com/nisshi-io/example-kafka-python.git
 cd example-kafka-python
 ```
 
@@ -23,46 +23,43 @@ Copy `example.env` into `.env` so that you have a local working copy:
 cp example.env .env
 ```
 
-To use S3 with [MinIO](https://min.io), uncomment this line and comment out
-other `STORAGE_ENGINE` definitions in your `.env`:
-
-```
-STORAGE_ENGINE="s3://tansu/"
-```
-
-To use [PostgreSQL](https://www.postgresql.org), uncomment this line and
-comment out other `STORAGE_ENGINE` definitions in your `.env`:
+By default, Nisshi stores its data in [PostgreSQL](https://www.postgresql.org):
 
 ```
 STORAGE_ENGINE="postgres://postgres:postgres@db"
 ```
 
-Now, start up Minio S3, PostgreSQL and Tansu:
+To use S3 with [MinIO](https://min.io) instead, uncomment this line and comment
+out the other `STORAGE_ENGINE` definitions in your `.env`:
 
-```shell
-docker compose up -d
+```
+STORAGE_ENGINE="s3://nisshi/"
 ```
 
-[Tansu's](https://tansu.io) PostgreSQL [schema](etc/initdb.d/010-schema.sql) is set up in [compose.yaml](compose.yaml),
-requiring no extra configuration. If you're using MinIO, there are 3 extra steps.
-
-Wait for MinIO to become ready:
+If you're using MinIO, create its bucket before you start Nisshi, because
+Nisshi checks at startup that the bucket exists. Start MinIO and wait for it
+to become ready:
 
 ```shell
+docker compose up -d --wait minio
 docker compose exec minio /usr/bin/mc ready local
 ```
 
-Then, setup some default MinIO credentials:
+Then, set up some default MinIO credentials, and create a bucket for Nisshi:
 
 ```shell
 docker compose exec minio /usr/bin/mc alias set local http://localhost:9000 minioadmin minioadmin
+docker compose exec minio /usr/bin/mc mb local/nisshi
 ```
 
-Finally, create a bucket on MinIO for Tansu:
+Now, start up PostgreSQL and Nisshi (and MinIO, if it isn't running yet):
 
 ```shell
-docker compose exec minio /usr/bin/mc mb local/tansu
+docker compose up -d --wait
 ```
+
+Nisshi creates its tables in PostgreSQL when it first starts, so PostgreSQL
+needs no extra configuration.
 
 Using [uv](https://docs.astral.sh/uv/), sync the project:
 
@@ -102,5 +99,5 @@ ConsumerRecord(topic='my-topic', partition=0, offset=19, timestamp=1740584226095
 ```
 
 In this example we have used the [kafka-python](https://github.com/dpkp/kafka-python)
-client to send and receive messages to Tansu a Kafka compatible broker using
-S3 or PostgreSQL for storage.
+client to send and receive messages to Nisshi, an Apache Kafka®-compatible broker using
+PostgreSQL or S3 for storage.

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 cp example.env .env
-docker compose --progress plain up --no-color --quiet-pull --detach --remove-orphans
+# Nisshi checks at startup that its S3 bucket exists, so create the bucket first.
+docker compose --progress plain up --no-color --quiet-pull --detach --wait minio
 mc ready local
 mc alias set local http://localhost:9000 minioadmin minioadmin
-mc mb local/tansu
+mc mb local/nisshi
+docker compose --progress plain up --no-color --quiet-pull --detach --remove-orphans
 uv sync --all-groups
