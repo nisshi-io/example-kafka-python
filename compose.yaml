@@ -58,7 +58,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    pull_policy: missing
 volumes:
   db:
     driver: local
