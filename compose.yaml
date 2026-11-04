@@ -36,6 +36,7 @@ services:
       timeout: 5s
   nisshi:
     image: ${NISSHI_IMAGE}
+    pull_policy: always
     restart: unless-stopped
     environment:
       CLUSTER_ID: ${CLUSTER_ID}
@@ -57,7 +58,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    pull_policy: missing
 volumes:
   db:
     driver: local

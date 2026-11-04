@@ -73,6 +73,11 @@ Run the example:
 uv run example.py
 ```
 
+The example connects to the broker at `127.0.0.1:9092`. To use another address,
+set `BOOTSTRAP_SERVERS`, for example `BOOTSTRAP_SERVERS=127.0.0.1:9093 uv run example.py`.
+It creates `my-topic` if the topic doesn't exist, so you can run it again against
+the same broker.
+
 You should see the following output:
 
 ```
