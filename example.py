@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-import sys, threading, time
+import os, sys, threading, time
 
 from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer
 from kafka.admin import NewTopic
+from kafka.errors import TopicAlreadyExistsError
+
+BOOTSTRAP_SERVERS = os.environ.get('BOOTSTRAP_SERVERS', '127.0.0.1:9092')
 
 
 class Producer(threading.Thread):
@@ -14,7 +17,7 @@ class Producer(threading.Thread):
         self.stop_event.set()
 
     def run(self):
-        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
+        producer = KafkaProducer(bootstrap_servers=BOOTSTRAP_SERVERS)
 
         while not self.stop_event.is_set():
             producer.send('my-topic', b"test")
@@ -33,7 +36,7 @@ class Consumer(threading.Thread):
         self.stop_event.set()
 
     def run(self):
-        consumer = KafkaConsumer(bootstrap_servers='127.0.0.1:9092',
+        consumer = KafkaConsumer(bootstrap_servers=BOOTSTRAP_SERVERS,
                                  auto_offset_reset='earliest',
                                  consumer_timeout_ms=1000)
         consumer.subscribe(['my-topic'])
@@ -50,13 +53,16 @@ class Consumer(threading.Thread):
 def main():
     # Create 'my-topic' Kafka topic
     try:
-        admin = KafkaAdminClient(bootstrap_servers='127.0.0.1:9092')
+        admin = KafkaAdminClient(bootstrap_servers=BOOTSTRAP_SERVERS)
 
         topic = NewTopic(name='my-topic',
                          num_partitions=1,
                          replication_factor=1)
         admin.create_topics([topic])
-    except Exception:
+    except TopicAlreadyExistsError:
+        pass
+    except Exception as e:
+        print(f"Could not create my-topic on {BOOTSTRAP_SERVERS}: {e!r}", file=sys.stderr)
         sys.exit(3)
 
     tasks = [
